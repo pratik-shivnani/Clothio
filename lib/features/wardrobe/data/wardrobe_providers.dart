@@ -13,9 +13,8 @@ part 'wardrobe_providers.g.dart';
 
 class ProcessedClothingResult {
   final File? croppedImage;
-  final Map<String, dynamic>? classification;
 
-  ProcessedClothingResult({this.croppedImage, this.classification});
+  ProcessedClothingResult({this.croppedImage});
 }
 
 @riverpod
@@ -35,7 +34,6 @@ Future<ProcessedClothingResult> processClothingImage(
 
   try {
     final bgRemovedBytes = await api.removeBackground(imageFile);
-    final classification = await api.classifyClothing(imageFile);
 
     final appDir = await getApplicationDocumentsDirectory();
     final clothingDir = Directory(p.join(appDir.path, 'clothing'));
@@ -47,10 +45,7 @@ Future<ProcessedClothingResult> processClothingImage(
     final croppedFile = File(p.join(clothingDir.path, 'cropped_$timestamp.png'));
     await croppedFile.writeAsBytes(bgRemovedBytes);
 
-    return ProcessedClothingResult(
-      croppedImage: croppedFile,
-      classification: classification,
-    );
+    return ProcessedClothingResult(croppedImage: croppedFile);
   } catch (e) {
     throw Exception('Backend processing failed: $e');
   }
@@ -75,4 +70,56 @@ Future<void> saveClothingItem(
     occasions: Value(jsonEncode(classification['occasions'] ?? [])),
     seasons: Value(jsonEncode(classification['seasons'] ?? [])),
   ));
+}
+
+@riverpod
+Stream<List<ClothingItem>> unclassifiedItems(UnclassifiedItemsRef ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return (db.select(db.clothingItems)
+        ..where((t) => t.type.equals('Unknown')))
+      .watch();
+}
+
+@riverpod
+class BatchClassify extends _$BatchClassify {
+  @override
+  ({int done, int total, bool running}) build() {
+    return (done: 0, total: 0, running: false);
+  }
+
+  Future<void> classifyAll() async {
+    final db = ref.read(appDatabaseProvider);
+    final api = ref.read(apiClientProvider);
+
+    final items = await (db.select(db.clothingItems)
+          ..where((t) => t.type.equals('Unknown')))
+        .get();
+
+    if (items.isEmpty) return;
+
+    state = (done: 0, total: items.length, running: true);
+
+    for (final item in items) {
+      try {
+        final imageFile = File(item.croppedImagePath ?? item.imagePath);
+        final classification = await api.classifyClothing(imageFile);
+
+        await (db.update(db.clothingItems)..where((t) => t.id.equals(item.id)))
+            .write(ClothingItemsCompanion(
+          type: Value((classification['type'] as String?) ?? 'Unknown'),
+          subType: Value(classification['sub_type'] as String?),
+          dominantColors: Value(jsonEncode(classification['colors'] ?? [])),
+          tags: Value(jsonEncode(classification['tags'] ?? [])),
+          occasions: Value(jsonEncode(classification['occasions'] ?? [])),
+          seasons: Value(jsonEncode(classification['seasons'] ?? [])),
+        ));
+      } catch (_) {
+        // Skip items that fail, continue with the rest
+      }
+
+      state = (done: state.done + 1, total: state.total, running: true);
+    }
+
+    state = (done: state.done, total: state.total, running: false);
+  }
 }

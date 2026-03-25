@@ -17,7 +17,6 @@ class AddClothingScreen extends ConsumerStatefulWidget {
 class _AddClothingScreenState extends ConsumerState<AddClothingScreen> {
   File? _selectedImage;
   File? _processedImage;
-  Map<String, dynamic>? _classification;
   bool _isProcessing = false;
   String? _error;
 
@@ -29,7 +28,6 @@ class _AddClothingScreenState extends ConsumerState<AddClothingScreen> {
     setState(() {
       _selectedImage = File(picked.path);
       _processedImage = null;
-      _classification = null;
       _error = null;
     });
 
@@ -47,7 +45,6 @@ class _AddClothingScreenState extends ConsumerState<AddClothingScreen> {
       );
       setState(() {
         _processedImage = result.croppedImage;
-        _classification = result.classification;
         _isProcessing = false;
       });
     } catch (e) {
@@ -65,7 +62,7 @@ class _AddClothingScreenState extends ConsumerState<AddClothingScreen> {
       await ref.read(saveClothingItemProvider(
         imagePath: _selectedImage!.path,
         croppedImagePath: _processedImage?.path,
-        classification: _classification ?? {},
+        classification: const {},
       ).future);
       if (mounted) context.pop();
     } catch (e) {
@@ -155,16 +152,11 @@ class _AddClothingScreenState extends ConsumerState<AddClothingScreen> {
                     ),
                   ),
                 ),
-              if (_classification != null) ...[
-                const SizedBox(height: 8),
-                _ClassificationCard(classification: _classification!),
-              ],
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: () => setState(() {
                   _selectedImage = null;
                   _processedImage = null;
-                  _classification = null;
                   _error = null;
                 }),
                 icon: const Icon(Icons.refresh),
@@ -215,64 +207,3 @@ class _ImageSourceCard extends StatelessWidget {
   }
 }
 
-class _ClassificationCard extends StatelessWidget {
-  final Map<String, dynamic> classification;
-
-  const _ClassificationCard({required this.classification});
-
-  @override
-  Widget build(BuildContext context) {
-    final type = classification['type'] as String? ?? 'Unknown';
-    final subType = classification['sub_type'] as String?;
-    final colors = (classification['colors'] as List?)?.cast<String>() ?? [];
-    final seasons = (classification['seasons'] as List?)?.cast<String>() ?? [];
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Classification', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
-            _InfoRow(label: 'Type', value: type),
-            if (subType != null) _InfoRow(label: 'Sub-type', value: subType),
-            if (colors.isNotEmpty) _InfoRow(label: 'Colors', value: colors.join(', ')),
-            if (seasons.isNotEmpty) _InfoRow(label: 'Seasons', value: seasons.join(', ')),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
-          ),
-        ],
-      ),
-    );
-  }
-}

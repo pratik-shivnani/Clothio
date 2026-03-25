@@ -18,6 +18,7 @@ class WardrobeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('My Wardrobe'),
         actions: [
+          _ClassifyButton(),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
@@ -124,6 +125,44 @@ class WardrobeScreen extends ConsumerWidget {
         onPressed: () => context.push('/wardrobe/add'),
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class _ClassifyButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unclassified = ref.watch(unclassifiedItemsProvider);
+    final batch = ref.watch(batchClassifyProvider);
+    final count = unclassified.valueOrNull?.length ?? 0;
+
+    if (count == 0 && !batch.running) return const SizedBox.shrink();
+
+    if (batch.running) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              '${batch.done}/${batch.total}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return TextButton.icon(
+      onPressed: () => ref.read(batchClassifyProvider.notifier).classifyAll(),
+      icon: const Icon(Icons.auto_fix_high, size: 18),
+      label: Text('Classify ($count)'),
     );
   }
 }
