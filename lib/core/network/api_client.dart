@@ -5,6 +5,8 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../settings/app_settings.dart';
+
 part 'api_client.g.dart';
 
 class ApiClient {
@@ -80,7 +82,9 @@ class ApiClient {
 
 @riverpod
 ApiClient apiClient(ApiClientRef ref) {
-  final client = ApiClient(baseUrl: 'http://localhost:8000');
+  final urlAsync = ref.watch(backendUrlProvider);
+  final baseUrl = urlAsync.valueOrNull ?? 'http://localhost:8000';
+  final client = ApiClient(baseUrl: baseUrl);
   ref.onDispose(() => client.dispose());
   return client;
 }
