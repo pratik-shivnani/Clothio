@@ -82,8 +82,7 @@ class ApiClient {
 
 @riverpod
 ApiClient apiClient(ApiClientRef ref) {
-  final urlAsync = ref.watch(backendUrlProvider);
-  final baseUrl = urlAsync.valueOrNull ?? 'http://localhost:8000';
+  final baseUrl = ref.watch(backendUrlProvider);
   final client = ApiClient(baseUrl: baseUrl);
   ref.onDispose(() => client.dispose());
   return client;

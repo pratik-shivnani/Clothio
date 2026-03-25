@@ -211,85 +211,78 @@ class _BackendSettingsCardState extends ConsumerState<_BackendSettingsCard> {
               ],
             ),
             const SizedBox(height: 12),
-            backendUrl.when(
-              data: (url) {
-                if (!_editing) {
-                  return InkWell(
-                    onTap: () {
-                      _controller.text = url;
-                      setState(() => _editing = true);
-                    },
+            if (!_editing)
+              InkWell(
+                onTap: () {
+                  _controller.text = backendUrl;
+                  setState(() => _editing = true);
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.link,
+                        size: 16,
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.link,
-                            size: 16,
-                            color: colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              url,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: colorScheme.onSurface.withValues(alpha: 0.4),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return Column(
-                  children: [
-                    TextField(
-                      controller: _controller,
-                      decoration: const InputDecoration(
-                        labelText: 'Backend URL',
-                        hintText: 'http://192.168.1.100:8000',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      keyboardType: TextInputType.url,
-                      autofocus: true,
-                      onSubmitted: (_) => _save(),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () => setState(() => _editing = false),
-                          child: const Text('Cancel'),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          backendUrl,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _save,
-                          child: const Text('Save & Test'),
-                        ),
-                      ],
+                      ),
+                      Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: colorScheme.onSurface.withValues(alpha: 0.4),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Backend URL',
+                      hintText: 'http://192.168.1.100:8000',
+                      border: OutlineInputBorder(),
+                      isDense: true,
                     ),
-                  ],
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Text('Error: $e'),
-            ),
+                    keyboardType: TextInputType.url,
+                    autofocus: true,
+                    onSubmitted: (_) => _save(),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => setState(() => _editing = false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton(
+                        onPressed: _save,
+                        child: const Text('Save & Test'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             const SizedBox(height: 8),
             Text(
               'Set this to your laptop\'s IP to connect from your phone',
